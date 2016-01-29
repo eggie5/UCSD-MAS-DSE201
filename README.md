@@ -1,2 +1,4 @@
-# UCSD-MAS-DSE-DSE201
-Databases
+DSE201
+======
+
+Course directory for DSE201
