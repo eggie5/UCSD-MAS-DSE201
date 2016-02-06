@@ -1,51 +1,74 @@
-﻿DROP TABLE IF EXISTS users CASCADE ;
+﻿
+ 
+
+-- http://www.piazza.com/class_profile/get_resource/ijcejswq97f42q/ijzd7g7gnrx3no
 
 
-CREATE TABLE users (
+DROP TABLE IF EXISTS cats."user" CASCADE ;
+
+
+CREATE TABLE cats."user"
+(
+  user_id serial primary key NOT NULL,
+  user_name character varying(50) NOT NULL,
+  facebook_id character varying(50) NOT NULL
+);
+
+
+DROP TABLE IF EXISTS  cats."video" CASCADE;
+
+CREATE TABLE cats."video"
+(
+  video_id serial primary key NOT NULL,
+  video_name character varying(50) NOT NULL
+);
+
+DROP TABLE IF EXISTS  cats.watch CASCADE;
+
+CREATE TABLE cats.watch
+(
+  watch_id serial primary key NOT NULL,
+  video_id integer references cats.video (video_id) NOT NULL,
+  user_id integer references cats."user" (user_id) NOT NULL,
+  "time" timestamp without time zone NOT NULL
+);
   
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    fb_uid TEXT
+
+DROP TABLE  IF EXISTS cats.likes CASCADE;
+
+CREATE TABLE cats."likes"
+(
+  like_id serial primary key NOT NULL,
+  user_id integer references cats."user" (user_id) NOT NULL,
+  video_id integer references cats.video (video_id) NOT NULL,
+  "time" timestamp without time zone NOT NULL
 );
 
-DROP TABLE IF EXISTS  videos CASCADE;
-
-CREATE TABLE videos (
-    id SERIAL PRIMARY KEY
-);
-
-DROP TABLE IF EXISTS  watches CASCADE;
-
-CREATE TABLE watches (
-    user_id INTEGER REFERENCES users (id) NOT NULL,
-    video_id INTEGER REFERENCES videos (id) NOT NULL
-);
-  
-
-DROP TABLE  IF EXISTS likes CASCADE;
-
-CREATE TABLE likes (
-    user_id INTEGER REFERENCES users (id) NOT NULL,
-    video_id INTEGER REFERENCES videos (id) NOT NULL,
-    created_at time with time zone
-);
-
-DROP TABLE IF EXISTS  logins CASCADE;
+DROP TABLE IF EXISTS  cats.login CASCADE;
 
 
-CREATE TABLE logins (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users (id) NOT NULL,
-    created_at time with time zone
+CREATE TABLE cats.login
+(
+  login_id serial primary key NOT NULL,
+  user_id integer references cats."user" (user_id) NOT NULL,
+  "time" timestamp without time zone NOT NULL
 );
 
 
-DROP TABLE IF EXISTS  suggestions CASCADE;
+DROP TABLE IF EXISTS cats.suggestion CASCADE;
 
-CREATE TABLE suggestions(
-  id SERIAL PRIMARY KEY,
-  login_id INTEGER REFERENCES logins (id) NOT NULL,
-  video_id INTEGER REFERENCES videos (id) NOT NULL
+CREATE TABLE cats.suggestion
+(
+  suggestion_id serial primary key NOT NULL,
+  login_id integer references cats.login(login_id) NOT NULL,
+  video_id integer references cats.video (video_id) NOT NULL
+);
+
+DROP TABLE IF EXISTS  cats.friend CASCADE;
+CREATE TABLE cats.friend
+(
+  user_id integer references cats."user" (user_id) NOT NULL,
+  friend_id integer references cats."user" (user_id) NOT NULL
 );
 
 
