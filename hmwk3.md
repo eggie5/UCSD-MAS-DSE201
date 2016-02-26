@@ -4,7 +4,7 @@
 
 ### Query 1
 
-```
+```sql
 EXPLAIN SELECT customer_name,sum(quantity),sum(price) 
 FROM sales.sale s 
 NATURAL JOIN sales.customer c 
