@@ -15,7 +15,7 @@ This query is simply looking up the total sales per customer. All the columns th
 
 ### Query 2
 
-```
+```sql
 SELECT state_name,sum(quantity), sum(price) 
 FROM sales.sale s 
 NATURAL JOIN sales.customer c 
@@ -27,7 +27,7 @@ This query is another example of the previous query where all column querires or
 
 ### Query 3
 
-```
+```sql
 SELECT product_id,sum(quantity),sum(price) AS dollar_value 
 FROM sales.sale s 
 WHERE customer_id =1
@@ -37,7 +37,7 @@ ORDER BY dollar_value
 
 #### Explain Output
 
-```
+```sql
 Sort  (cost=42421.98..42501.23 rows=31698 width=14)
   Sort Key: (sum(price))
   ->  HashAggregate  (cost=39656.00..40052.23 rows=31698 width=14)
@@ -61,7 +61,7 @@ create index customer_id_index on sales.sale(customer_id)
 
 run it again in the new index
 
-```
+```sql
 SELECT product_id,sum(quantity),sum(price) AS dollar_value 
 FROM sales.sale s 
 WHERE customer_id =1
@@ -73,7 +73,7 @@ ORDER BY dollar_value
 #### Explain Output
 
 
-```
+```sql
 Sort  (cost=25406.31..25485.56 rows=31698 width=14)
   Sort Key: (sum(price))
   ->  HashAggregate  (cost=22640.33..23036.55 rows=31698 width=14)
@@ -86,7 +86,7 @@ Sort  (cost=25406.31..25485.56 rows=31698 width=14)
 
 ### Query 4
 
-```
+```sql
 SELECT product_id,customer_id,sum(price) AS dollar_value 
 FROM sales.sale 
 GROUP BY product_id,customer_id 
@@ -95,7 +95,7 @@ ORDER BY dollar_value
 
 #### Explain Output
 
-```
+```sql
 Sort  (cost=321558.87..322178.92 rows=248022 width=14)
   Sort Key: (sum(price))
   ->  GroupAggregate  (cost=276235.69..299335.96 rows=248022 width=14)
@@ -112,7 +112,7 @@ As you can see from the query plan, we have to do a full sequential scan on sale
 
 ### Query 5
 
-```
+```sql
 SELECT state_name,ca.category_id,sum(price) FROM
 sales.sale sa NATURAL JOIN sales.customer cu 
 NATURAL JOIN sales.state st 
@@ -124,7 +124,7 @@ GROUP BY state_name,ca.category_id
 #### Explain Output
 
 
-```
+```sql
 GroupAggregate  (cost=485614.11..518114.11 rows=1000000 width=128)
   Group Key: st.state_name, ca.category_id
   ->  Sort  (cost=485614.11..490614.11 rows=2000000 width=128)
@@ -154,7 +154,7 @@ As you can see from the query plan we have a 5 way join, howver we can't optimzi
 
 ### Query 6
 
-```
+```sql
 SELECT cate.category_id,cust.customer_id,sum(quantity),sum(price) FROM
 (SELECT category_id,sum(price) AS dollar_value FROM
 sales.category NATURAL JOIN sales.product NATURAL JOIN sales.sale
@@ -166,7 +166,7 @@ GROUP BY cate.category_id,cust.customer_id ORDER BY cate.category_id
 ```
 
 #### Explain Output
-```
+```sql
 Sort  (cost=206072.90..206073.10 rows=80 width=18)
   Sort Key: cate.category_id
   ->  HashAggregate  (cost=206069.38..206070.38 rows=80 width=18)
@@ -209,13 +209,13 @@ Sort  (cost=206072.90..206073.10 rows=80 width=18)
 
 Add an index to product.category_id
 
-```
+```sql
 CREATE INDEX product_category_id_idx
   ON sales.product USING btree
   (category_id);
 ```
 
-```
+```sql
 CREATE INDEX sale_product_id_idx
   ON sales.sale USING btree
   (product_id);
@@ -223,7 +223,7 @@ CREATE INDEX sale_product_id_idx
 
 #### Explain Output w/ index
                             
-```
+```sql
 BTree index on sale.product_id
 Sort  (cost=168190.43..168190.63 rows=80 width=18)
   Sort Key: category.category_id
@@ -268,7 +268,7 @@ Sort  (cost=168190.43..168190.63 rows=80 width=18)
 
 ### Query 1
 
-```
+```sql
 SELECT video_id, COUNT(*) AS like_no 
 FROM cats.likes 
 GROUP BY video_id
@@ -276,7 +276,7 @@ ORDER BY like_no DESC
 LIMIT 10
 ```
 
-```
+```sql
 Limit  (cost=42897.11..42897.14 rows=10 width=4)
   ->  Sort  (cost=42897.11..42909.62 rows=5002 width=4)
         Sort Key: (count(*))
@@ -291,7 +291,7 @@ As this query does no extensive querying or joining on a particular column, it s
 
 ### Query 2
 
-```
+```sql
 SELECT l.video_id, COUNT(*) AS like_no 
 FROM cats.friend f, cats.like l
 WHERE f.user_id=2004
@@ -302,7 +302,7 @@ LIMIT 10
 --870ms
 ```
 
-```
+```sql
 Limit  (cost=107391.36..107391.39 rows=10 width=4)
   ->  Sort  (cost=107391.36..107392.39 rows=411 width=4)
         Sort Key: (count(*))
@@ -319,14 +319,14 @@ Limit  (cost=107391.36..107391.39 rows=10 width=4)
 #### Analysis
 As we can see our sql syntax is doing an implicit join between the friend and like table on the `friend.user_id` column. Thus it would be beneficial to add an index to it so it doesn't have to do sequential search. Using the same logic it would seem that adding an index to `like.user_id`.
 
-```
+```sql
 CREATE INDEX friend_user_id_idx ON cats.friend USING btree (user_id); --3964ms
 ```
 
 The query only takes 685ms now. The like.user_id index did not help any extra:
 
 
-```
+```sql
 Limit  (cost=73619.53..73619.56 rows=10 width=4)
   ->  Sort  (cost=73619.53..73620.56 rows=411 width=4)
         Sort Key: (count(*))
@@ -344,7 +344,7 @@ Limit  (cost=73619.53..73619.56 rows=10 width=4)
 
 ### Query 3
 
-```
+```sql
 SELECT l.video, COUNT(*)
 FROM (SELECT l.video_id AS video, l.user_id AS user1 
   FROM cats.friend f, cats.like l 
@@ -363,7 +363,7 @@ ORDER BY COUNT(*) DESC LIMIT 10
 --query runs in 2280ms
 
 
-```
+```sql
 Limit  (cost=284830.76..284830.79 rows=10 width=4)
   ->  Sort  (cost=284830.76..284831.26 rows=200 width=4)
         Sort Key: (count(*))
@@ -393,13 +393,13 @@ Limit  (cost=284830.76..284830.79 rows=10 width=4)
 #### Analysis
 It still stands from the last argument that an index on the heavily queried `friend.user_id` column would be beneficial:
 
-```
+```sql
 CREATE INDEX friend_user_id_idx ON cats.friend USING btree (user_id); -- 3627ms
 ```
 
 Now the query now only takes 1331ms, half the time
 
-```
+```sql
 Limit  (cost=152067.65..152067.68 rows=10 width=4)
   ->  Sort  (cost=152067.65..152068.15 rows=200 width=4)
         Sort Key: (count(*))
@@ -436,7 +436,7 @@ As you can see the query now uses the bitmap index on friend.user_id for both jo
 
 ### Query 4
 
-```
+```sql
 SELECT l.video_id, COUNT(*) FROM cats.like l
 WHERE l.user_id 
 IN (SELECT ly.user_id 
@@ -447,7 +447,7 @@ ORDER BY COUNT(*)
 DESC LIMIT 10
 ```
 
-```
+```sql
 --takes 2173ms to run
 Limit  (cost=214655.54..214655.57 rows=10 width=4)
   ->  Sort  (cost=214655.54..214668.05 rows=5002 width=4)
@@ -472,11 +472,11 @@ Limit  (cost=214655.54..214655.57 rows=10 width=4)
 Since we are doing a sequential scan on `like.user_id` it would seem beneficial to add an index there
 after adding the index, the runtime is: 1992ms, not much of an improvement
 
-```
+```sql
 CREATE INDEX like_user_id_idx ON cats."like" USING btree (user_id);
 ```
 
-```
+```sql
 Limit  (cost=186603.76..186603.79 rows=10 width=4)
   ->  Sort  (cost=186603.76..186616.27 rows=5002 width=4)
         Sort Key: (count(*))
@@ -504,7 +504,7 @@ now as you can see it does an index scan on like.user_id and lowers the cost to 
 
 ### Query 5
 
-```
+```sql
 WITH WeightOfUsers AS
 (SELECT ly.user_id, LOG(1+COUNT(*)) AS weight FROM cats.like lx, cats.like ly
 WHERE lx.user_id=1 AND lx.video_id=ly.video_id 
@@ -517,7 +517,7 @@ ORDER BY sum_weight DESC LIMIT 10
 -- Query takes 2610m
 ```
 
-```
+```sql
 Limit  (cost=256169.77..256169.80 rows=10 width=12)
   CTE weightofusers
     ->  HashAggregate  (cost=149360.16..149367.16 rows=400 width=4)
@@ -544,11 +544,11 @@ Limit  (cost=256169.77..256169.80 rows=10 width=12)
 We can see that the planner is doing a sequential scan on like.user_id, so we should add an index to that.
 
 
-```
+```sql
 CREATE INDEX like_user_id_idx ON cats."like" USING btree (user_id); -- 3168ms
 ```
 
-```
+```sql
 Limit  (cost=228117.99..228118.02 rows=10 width=12)
   CTE weightofusers
     ->  HashAggregate  (cost=121308.38..121315.38 rows=400 width=4)
