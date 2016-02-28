@@ -269,6 +269,6 @@ Sort  (cost=168190.43..168190.63 rows=80 width=18)
 ```
 
 
-####
+#### Analysis
 
 The two indexes made postgres perfrom nested loops instead of natural joins.
